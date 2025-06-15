@@ -1,26 +1,38 @@
 package Students;
 
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
 public class Main {
     public static void main(String[] args) {
-        StudentDAOHibernate dao = new StudentDAOHibernate();
 
-        // Save
-        Student s1 = new Student("Alkeo Gaci", "alkeo@epoka.edu.al");
-        dao.save(s1);
+        // Step 1: Create entities
+        Course dbCourse = new Course("Databases", 4);
+        Course javaCourse = new Course("Java Programming", 5);
 
-        // List all
-        System.out.println("\nAll students:");
-        dao.getAllStudents().forEach(System.out::println);
+        Student student = new Student("Alkeo Gaci", "alkeo@epoka.edu.al");
+        student.addCourse(dbCourse);
+        student.addCourse(javaCourse);
 
-        // Update
-        Student studentToUpdate = dao.getById(s1.getId());
-        studentToUpdate.setName("Alkeo G.");
-        dao.update(studentToUpdate);
+        // Step 2: Save to DB
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Transaction tx = session.beginTransaction();
 
-        // Delete
-        // dao.delete(studentToUpdate.getId());
+            session.persist(dbCourse);
+            session.persist(javaCourse);
+            session.persist(student);
 
-        System.out.println("\nAfter update:");
-        dao.getAllStudents().forEach(System.out::println);
+            tx.commit();
+        }
+
+        // Step 3: Fetch and print enrolled courses
+        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
+            Student s = session.get(Student.class, student.getId());
+            System.out.println("👤 Student:");
+            System.out.println(s);
+
+            System.out.println("\n📚 Enrolled Courses:");
+            s.getCourses().forEach(System.out::println);
+        }
     }
 }
